@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Count
 from django.utils.translation import gettext as _
 
 User = get_user_model()
@@ -26,6 +27,13 @@ class Article(BaseModel):
     def __str__(self):
         return self.title
 
+    def get_score(self):
+        return self.votes.score
+
+    def count_users_voted(self):
+        queryset = self.objects.filter().prefetch_related('votes').annotate(vote_count=Count('vote')) or 0
+        return queryset
+
 
 class Vote(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes', verbose_name=_('user voted'))
@@ -39,4 +47,4 @@ class Vote(BaseModel):
         unique_together = ('user', 'article')
 
     def __str__(self):
-        return f"{self.user} voted article: {self.article.name} with score {self.score}"
+        return f"{self.user} voted article: {self.article.title} with score {self.score}"
